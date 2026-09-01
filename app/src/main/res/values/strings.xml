@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">To-Do</string>
+    <string name="widget_description">Shows your to-do list and lets you check off tasks</string>
+</resources>
