@@ -77,7 +77,11 @@ be compiled on a computer with Android Studio.
 
 ### Building an APK (no USB cable needed)
 
-1. Menu: **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
+1. Menu: **Build → Generate App Bundles or APKs → Generate APKs**.
+   (In older Android Studio versions this menu reads **Build Bundle(s) /
+   APK(s) → Build APK(s)** — same thing.) Don't pick *Generate Signed App
+   Bundle or APK...* just below it; that's the release path and it will ask
+   you to create a signing key you don't need.
 2. When it finishes, a notification appears in the bottom-right: "APK(s)
    generated successfully" with a **locate** link. That opens the folder:
 
@@ -99,16 +103,16 @@ be compiled on a computer with Android Studio.
 
 ### Debug vs release APKs — important
 
-**Build APK(s)** builds whichever build variant is selected, and the default
+**Generate APKs** builds whichever build variant is selected, and the default
 is **debug**. That's what you want: a debug APK is automatically signed with
 Android Studio's built-in debug key, so it installs on the phone as-is.
 
 If you switch the Build Variant to **release**, the APK it produces is
 *unsigned* and the phone will refuse to install it ("App not installed" /
 "package appears to be invalid"). A release build needs a signing key
-created via Build → Generate Signed Bundle / APK. There's no benefit here —
-debug builds run at full speed for an app like this. Stick with debug unless
-you ever want to publish to the Play Store.
+created via Build → Generate Signed App Bundle or APK. There's no benefit
+here — debug builds run at full speed for an app like this. Stick with debug
+unless you ever want to publish to the Play Store.
 
 Practical consequences of the debug key: the APK is signed with a key
 Android Studio generated on that specific computer, so always rebuild from
