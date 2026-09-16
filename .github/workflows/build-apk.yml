@@ -25,7 +25,23 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug | tee "$RUNNER_TEMP/build.log"
+
+      # When the build fails, repeat just the compiler error lines at the very
+      # end of the log and in the run's summary page. Gradle prints them
+      # hundreds of lines up, where they are easy to miss.
+      - name: Show what went wrong
+        if: failure()
+        run: |
+          {
+            echo '### Build errors'
+            echo '```'
+            grep -E '^(e|w): |error:|FAILURE:|\* What went wrong' "$RUNNER_TEMP/build.log" \
+              | head -60 || echo '(no compiler error lines found — see the full log above)'
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the APK
         uses: actions/upload-artifact@v4
