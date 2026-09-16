@@ -138,6 +138,28 @@ need the Android SDK installed (Android Studio provides it); if Gradle can't
 find it, create a file `local.properties` in the project root containing
 `sdk.dir=` followed by your SDK path.
 
+### Automatic builds on GitHub (no computer needed)
+
+Every push to GitHub triggers the workflow in
+`.github/workflows/build-apk.yml`, which compiles the project on GitHub's
+own machines and attaches the finished APK to the run. This means:
+
+- Compile errors show up on GitHub within a couple of minutes of a push, so
+  they can be found and fixed without anyone opening Android Studio.
+- A ready-to-install APK can be downloaded from GitHub directly onto the
+  phone — Android Studio is no longer needed just to produce a build.
+
+To get the APK: on github.com open the repository → **Actions** tab → click
+the most recent **Build APK** run → scroll to **Artifacts** at the bottom →
+download `family2-debug-apk-<number>`. It arrives as a .zip; unzip it to get
+`app-debug.apk`, then install that as described above. A green tick next to
+the run means it built; a red cross means it didn't compile, and clicking
+the run shows the error.
+
+The workflow builds the *debug* APK (see the debug vs release note above),
+uses Java 17 to match the project's settings, and needs no configuration or
+secrets. Artifacts are kept by GitHub for 90 days.
+
 ## Known limitations (v1)
 
 - No cloud sync / backup — data lives only on this phone. If you lose the
