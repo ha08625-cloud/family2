@@ -27,7 +27,8 @@ jobs:
       - name: Build debug APK
         run: |
           set -o pipefail
-          ./gradlew assembleDebug | tee "$RUNNER_TEMP/build.log"
+          # 2>&1 matters: the Kotlin compiler writes its errors to stderr.
+          ./gradlew assembleDebug 2>&1 | tee "$RUNNER_TEMP/build.log"
 
       # When the build fails, repeat just the compiler error lines at the very
       # end of the log and in the run's summary page. Gradle prints them
@@ -38,7 +39,7 @@ jobs:
           {
             echo '### Build errors'
             echo '```'
-            grep -E '^(e|w): |error:|FAILURE:|\* What went wrong' "$RUNNER_TEMP/build.log" \
+            grep -E '^(e|w): |error:|FAILURE:|FAILED$|\* What went wrong|^> ' "$RUNNER_TEMP/build.log" \
               | head -60 || echo '(no compiler error lines found — see the full log above)'
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
