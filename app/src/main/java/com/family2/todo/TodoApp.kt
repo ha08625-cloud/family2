@@ -1,6 +1,7 @@
 package com.family2.todo
 
 import android.app.Application
+import androidx.glance.appwidget.updateAll
 import com.family2.todo.data.TaskDatabase
 import com.family2.todo.data.TaskRepository
 import com.family2.todo.widget.TodoWidget
