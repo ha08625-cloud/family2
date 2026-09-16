@@ -160,6 +160,139 @@ The workflow builds the *debug* APK (see the debug vs release note above),
 uses Java 17 to match the project's settings, and needs no configuration or
 secrets. Artifacts are kept by GitHub for 90 days.
 
+### The fast loop: Claude Code on the laptop, phone over Wi-Fi
+
+The loop above (Android Studio -> APK -> upload -> download -> install) takes
+a few minutes per change. This one takes seconds, and lets Claude Code build
+the app, install it on the phone and read the phone's crash logs by itself.
+
+It needs Claude Code running **on the Windows laptop**, not in a browser,
+because the phone is attached to the laptop. Set up once, then use daily.
+
+#### One-time setup
+
+**1. Turn on wireless debugging on the phone**
+
+- Settings -> About phone -> Software information -> tap **Build number**
+  seven times. It will say "Developer mode has been enabled".
+- Settings -> Developer options -> turn on **Wireless debugging**.
+- The phone and the laptop must be on the *same* Wi-Fi network. A guest
+  network usually will not work, because it blocks devices from seeing each
+  other.
+
+**2. Find adb on the laptop**
+
+`adb` is the tool that talks to the phone. Android Studio already installed
+it, at:
+
+```
+%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe
+```
+
+Add that folder to the PATH so `adb` works from any terminal: press Start,
+type "environment variables", open **Edit the system environment variables**
+-> **Environment Variables** -> under *User variables* select **Path** ->
+**Edit** -> **New** -> paste the folder path (without `\adb.exe`) -> OK.
+Close and reopen any terminal, then check it worked:
+
+```
+adb version
+```
+
+**3. Pair the phone with the laptop (once)**
+
+On the phone: Developer options -> Wireless debugging -> **Pair device with
+pairing code**. A box appears showing a 6-digit code and an address like
+`192.168.1.42:37183`.
+
+In a terminal on the laptop, using *that* address:
+
+```
+adb pair 192.168.1.42:37183
+```
+
+It asks for the pairing code; type the 6 digits from the phone.
+
+**4. Connect (needed again after each reboot)**
+
+Important gotcha: the pairing screen and the main Wireless debugging screen
+show **two different port numbers**. Pairing is done. Now go back to the main
+**Wireless debugging** screen and read the address shown there — same IP,
+different port, e.g. `192.168.1.42:41235` — and run:
+
+```
+adb connect 192.168.1.42:41235
+```
+
+Check the phone is visible:
+
+```
+adb devices
+```
+
+It should list one device as `device` (not `unauthorized` or `offline`).
+
+**5. Install Claude Code on the laptop**
+
+Install Node.js 18 or newer from nodejs.org, then in a terminal:
+
+```
+npm install -g @anthropic-ai/claude-code
+```
+
+Then `cd` into the cloned project folder and run `claude`. Current install
+options are at https://code.claude.com/docs.
+
+Run it in **PowerShell or Git Bash, not WSL**. Inside WSL, Linux and Windows
+are effectively different machines, and reaching the Windows `adb.exe` from
+there is awkward.
+
+#### Using it day to day
+
+With the phone connected, one command builds, installs and launches:
+
+```
+.\gradlew.bat installDebug
+adb shell am start -n com.family2.todo/.MainActivity
+```
+
+Claude Code can run both itself. When something crashes, it can read the
+reason straight off the phone:
+
+```
+adb logcat -b crash -d
+```
+
+or watch the app's own log lines live with:
+
+```
+adb logcat --pid=$(adb shell pidof -s com.family2.todo)
+```
+
+So the loop becomes: describe the change -> Claude edits, builds, installs ->
+look at the phone. No APK copying, and Claude sees its own errors.
+
+#### Things that will trip you up
+
+- **After the phone reboots or rejoins Wi-Fi, the port changes.** Pairing
+  survives, but you must re-read the address on the Wireless debugging screen
+  and run `adb connect` again. This is the single most common annoyance.
+- **`adb devices` shows nothing** — usually the two devices are on different
+  Wi-Fi networks, or the laptop is on a VPN.
+- **The widget does not change after reinstalling.** Android caches widget
+  layouts. Remove the widget from the home screen and add it again.
+- **`installDebug` still needs the Android SDK**, which Android Studio
+  provides. Gradle finds it via `local.properties`, which Android Studio
+  wrote when it first opened the project. That file is machine-specific and
+  deliberately not committed to git.
+- Terminal builds use the same debug signing key as Android Studio on that
+  machine (`%USERPROFILE%\.android\debug.keystore`), so installs update the
+  existing app rather than being rejected. Building on a *different* computer
+  still hits the key-mismatch problem described above.
+- **GitHub Actions still matters.** It is the safety net that catches
+  anything broken before it reaches the phone, and it is the only way a
+  browser-based Claude Code session can check whether code compiles.
+
 ## Known limitations (v1)
 
 - No cloud sync / backup — data lives only on this phone. If you lose the
